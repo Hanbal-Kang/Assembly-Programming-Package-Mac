@@ -1,28 +1,27 @@
 #!/bin/bash
-# Usage: ./build.sh filename
-# filename is WITHOUT the .asm extension. Put your .asm files in examples/
-# (or wherever, as long as it's inside this repo folder).
+# Usage: ./build.sh filename          -> assemble, then open DOSBox at the prompt
+#        ./build.sh filename debug    -> assemble, then open DOSBox with AFD loaded
 #
-# Keep filenames to 8 characters max (DOS 8.3 filename limit).
+# filename is WITHOUT .asm. Files live in examples/. Max 8 characters.
 #
-# Assembling happens NATIVELY on macOS (via brew-installed nasm) since
-# the original package's nasm.exe is a Windows binary, not DOS, and
-# can't run in DOSBox. Only AFD.exe (real DOS binary) runs inside DOSBox.
-#
-# Inside AFD:
-#   F2  - step one instruction
-#   F1  - step, but step OVER calls
-#   G   - run to completion / next breakpoint
-#   B   - set a breakpoint
+# In DOSBox you land in the examples folder, so you can type:
+#   filename.com        run the program (good for display memory output)
+#   afd filename.com    debug it in AFD
 
 set -e
 
 if [ -z "$1" ]; then
-    echo "Usage: ./build.sh <filename>"
+    echo "Usage: ./build.sh <filename> [debug]"
+    exit 1
+fi
+
+if ! command -v nasm &> /dev/null; then
+    echo "nasm not found. Run ./install.sh first."
     exit 1
 fi
 
 FILE="$1"
+MODE="$2"
 REPO_DIR="$(cd "$(dirname "$0")" && pwd)"
 ASM_PATH="$REPO_DIR/examples/$FILE.asm"
 
@@ -32,7 +31,7 @@ if [ ! -f "$ASM_PATH" ]; then
 fi
 
 echo "Assembling $FILE.asm..."
-nasm -f bin "$ASM_PATH" -o "$REPO_DIR/examples/$FILE.com"
+nasm -f bin "$ASM_PATH" -o "$REPO_DIR/examples/$FILE.com" -l "$REPO_DIR/examples/$FILE.lst"
 echo "Assembled OK -> examples/$FILE.com"
 
 CONF="$REPO_DIR/.dosbox_runtime.conf"
@@ -42,11 +41,12 @@ mount c "$REPO_DIR"
 c:
 set path=c:\tools;%path%
 cd examples
-afd $FILE.com
 EOF
 
-# Find dosbox even if it's not on PATH yet (e.g. install.sh's symlink
-# step got skipped or needed a fresh terminal).
+if [ "$MODE" == "debug" ]; then
+    echo "afd $FILE.com" >> "$CONF"
+fi
+
 DOSBOX_BIN="dosbox"
 if ! command -v dosbox &> /dev/null; then
     if [ -f "/Applications/DOSBox.app/Contents/MacOS/DOSBox" ]; then
