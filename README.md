@@ -45,7 +45,15 @@ In Terminal, type (replace `hello` with your filename, no `.asm` at the end):
 ./build.sh hello
 ```
 
-This assembles your code and opens DOSBox with the AFD debugger.
+This assembles your code and opens DOSBox in the `examples` folder. You will see a DOS prompt (`C:\EXAMPLES>`). Now type one of these:
+
+- `hello.com` — runs your program (use this to see screen / display memory output)
+- `afd hello.com` — opens it in the AFD debugger
+
+Want AFD to open straight away? Use:
+```bash
+./build.sh hello debug
+```
 
 **Inside AFD, press:**
 - `G` — run the program
@@ -53,10 +61,13 @@ This assembles your code and opens DOSBox with the AFD debugger.
 - `F1` — step, skipping over `call` instructions
 - `B <address>` — set a breakpoint
 
+**Changed your code?** Close DOSBox and run `./build.sh hello` again from Terminal. DOSBox can't assemble, only Terminal can.
+
+A `.lst` file is also created next to your `.asm`. It shows the address and bytes of every instruction.
+
 ## Test everything works
 
-Run the sample file first:
 ```bash
 ./build.sh hello
 ```
-Press `G`. You should see the letter `B` appear on screen.
+Then type `hello.com` at the DOS prompt. You should see the letter `B` on the third line of the screen.
